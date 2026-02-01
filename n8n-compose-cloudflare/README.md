@@ -41,7 +41,7 @@ Opcional:
 
 ```bash
 git clone https://github.com/jgomez8168/n8n.git
-cd n8n-compose-cloudflare
+cd n8n/n8n-compose-cloudflare
 cp .env.example .env # aqui debes configurar todas las variables
 ```
 

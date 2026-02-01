@@ -35,7 +35,7 @@ Opcional:
 
 ```bash
 git clone https://github.com/jgomez8168/n8n.git
-cd n8n-compose-traefik
+cd n8n/n8n-compose-traefik
 cp .env.example .env # aqui debes configurar todas las variables
 ```
 
