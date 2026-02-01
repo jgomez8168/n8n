@@ -51,6 +51,7 @@ Edita el archivo .env y ajusta estas variables:
 - TRAEFIK_ACME_EMAIL=your-email (opcional).
 
 El archivo .env debería quedar:
+
 ![Paso 3](assets/3.png)
 
 ### 3) Configurar registros DNS
