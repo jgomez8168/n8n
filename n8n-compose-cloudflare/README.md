@@ -22,18 +22,26 @@ Necesitas un servidor **VPS o local** con:
 
 Además:
 
-- **Cloudflare Tunnel Token** (obligatorio si vas a exponer n8n por Cloudflare)
+- Un dominio registrado (por ejemplo: tudominio.com) y configurado en Cloudflare para usar **Cloudflare Tunnel** (obligatorio si vas a exponer n8n por Cloudflare)
+
   - Sigue el paso a paso del repositorio: [n8n-cloudflare-docker-compose](https://github.com/jgomez8168-maker/n8n-cloudflare)
+
+Opcional:
+
 - **Gemini API Key** *(opcional, solo si quieres probar el flujo demo)*  
   - Crea tu API Key aquí: [Google AI Studio](https://aistudio.google.com/apikey?hl=es-419)
+
+
+
+
 
 ## Instalación y despliegue
 
 ### 1) Clonar el repositorio
 
 ```bash
-git clone https://github.com/jgomez8168-maker/n8n-starter.git
-cd n8n-starter
+git clone https://github.com/jgomez8168/n8n.git
+cd n8n-compose-cloudflare
 cp .env.example .env # aqui debes configurar todas las variables
 ```
 
@@ -57,7 +65,7 @@ Desde la raíz del proyecto:
 
 ```bash
 docker compose pull
-docekr compose create && docker compose up -d
+docker compose create && docker compose up -d
 ```
 Verifica que todo esté corriendo:
 

@@ -1,6 +1,6 @@
 # n8n (Docker Compose)
 
-Despliegue de n8n con PostgreSQL y base de datos vectorial: Integración de colecciones de embeddings y exposición segura mediante Cloudflare Tunnel.
+Despliegue de n8n con PostgreSQL y base de datos vectorial: Integración de colecciones de embeddings y exposición mediante Traefik.
 
 ### ¿Qué incluye?
 
@@ -10,7 +10,7 @@ Despliegue de n8n con PostgreSQL y base de datos vectorial: Integración de cole
 
 ✅ [**PostgreSQL**](https://www.postgresql.org/) -  El motor del mundo de la ingeniería de datos, maneja grandes volúmenes de información de forma segura y confiable.
 
-✅ [**Cloudflare Tunnel**](https://developers.cloudflare.com/cloudflare-one/networks/connectors/cloudflare-tunnel/) - Expone tus servicios en la web de forma segura sin abrir puertos, ideal para publicar n8n y otros servicios internos.
+✅ [**Traefik**](https://traefik.io/) - Expone tus servicios en la web de forma segura, ideal para publicar n8n y otros servicios internos.
 
 ## Requisitos
 
@@ -22,8 +22,6 @@ Necesitas un servidor **VPS o local** con:
 
 Además:
 
-- **Cloudflare Tunnel Token** (obligatorio si vas a exponer n8n por Cloudflare)
-  - Sigue el paso a paso del repositorio: [n8n-cloudflare-docker-compose](https://github.com/jgomez8168-maker/n8n-cloudflare)
 - **Gemini API Key** *(opcional, solo si quieres probar el flujo demo)*  
   - Crea tu API Key aquí: [Google AI Studio](https://aistudio.google.com/apikey?hl=es-419)
 
@@ -32,8 +30,8 @@ Además:
 ### 1) Clonar el repositorio
 
 ```bash
-git clone https://github.com/jgomez8168-maker/n8n-starter.git
-cd n8n-starter
+git clone https://github.com/jgomez8168/n8n.git
+cd n8n-compose-traefick
 cp .env.example .env # aqui debes configurar todas las variables
 ```
 
@@ -41,23 +39,34 @@ cp .env.example .env # aqui debes configurar todas las variables
 Edita el archivo .env y ajusta estas variables:
 
 - N8N_HOST=n8n.yourdomian.uk Nombre del host configurado en Cloudflare (tu subdominio/dominio).
-![Paso 1](assets/1.png)
+
 - WEBHOOK_URL=https://n8n.yourdomian.uk/ Debe ser la URL pública que va a usar n8n para webhooks.
 
 - GEMINI_API_KEY=your-api-key (opcional) Pega tu API key si quieres probar el flujo demo.
 
-- CLOUDFLARE_TUNNEL_TOKEN=your-cloudflare-token Token del último paso en Cloudflare Tunnel (del repo guía).
-![Paso 2](assets/2.png)
+- TRAEFIK_ACME_EMAIL=your-email (opcional).
 
 El archivo .env debería quedar:
 ![Paso 3](assets/3.png)
 
-### 3) Levantar los contenedores
+### 3) Configurar registros DNS
+
+En el proveedor de DNS donde administras tu dominio (por ejemplo, Hostinger, Cloudflare, etc.), agrega un registro de tipo A con la siguiente información:
+
+- Tipo: A
+- Host / Nombre: tuhost
+- Dirección IP: IP_DEL_SERVIDOR
+
+Este registro permitirá que el dominio apunte correctamente al servidor donde se ejecutará la aplicación.
+
+![Paso 7](assets/7.png)
+
+### 4) Levantar los contenedores
 Desde la raíz del proyecto:
 
 ```bash
 docker compose pull
-docekr compose create && docker compose up -d
+docker compose create && docker compose up -d
 ```
 Verifica que todo esté corriendo:
 
@@ -65,7 +74,7 @@ Verifica que todo esté corriendo:
 docker compose ps
 docker compose logs -f
 ```
-## 4) Abrir n8n
+## 5) Abrir n8n
 
 Ahora abre en tu navegador:
 https://N8N_HOST
