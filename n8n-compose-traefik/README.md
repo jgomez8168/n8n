@@ -22,6 +22,10 @@ Necesitas un servidor **VPS o local** con:
 
 Además:
 
+- Un dominio registrado (por ejemplo: tudominio.com)
+
+Opcional:
+
 - **Gemini API Key** *(opcional, solo si quieres probar el flujo demo)*  
   - Crea tu API Key aquí: [Google AI Studio](https://aistudio.google.com/apikey?hl=es-419)
 
@@ -31,7 +35,7 @@ Además:
 
 ```bash
 git clone https://github.com/jgomez8168/n8n.git
-cd n8n-compose-traefick
+cd n8n-compose-traefik
 cp .env.example .env # aqui debes configurar todas las variables
 ```
 
