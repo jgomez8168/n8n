@@ -1,0 +1,7 @@
+.env
+<<<<<<< HEAD
+.DS_Store
+.vscode/
+.idea/
+=======
+>>>>>>> 6a2807a (Fix yml: n8n starter)

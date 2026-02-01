@@ -1,0 +1,147 @@
+volumes:
+  n8n_storage:
+  postgres_storage:
+  qdrant_storage:
+  traefik_letsencrypt:
+
+networks:
+  demo:
+
+x-n8n: &service-n8n
+  image: n8nio/n8n:1.103.2
+  networks:
+    - demo
+  environment:
+    - DB_TYPE=postgresdb
+    - DB_POSTGRESDB_HOST=postgres
+    - DB_POSTGRESDB_USER=${POSTGRES_USER}
+    - DB_POSTGRESDB_PASSWORD=${POSTGRES_PASSWORD}
+    - DB_POSTGRESDB_DATABASE=${POSTGRES_DB}
+
+    - N8N_DIAGNOSTICS_ENABLED=false
+    - N8N_PERSONALIZATION_ENABLED=false
+
+    - N8N_HOST=${N8N_HOST}
+    - N8N_PROTOCOL=${N8N_PROTOCOL}
+    - WEBHOOK_URL=${WEBHOOK_URL}
+
+    - N8N_ENCRYPTION_KEY
+    - N8N_USER_MANAGEMENT_JWT_SECRET
+
+    - GEMINI_API_KEY=${GEMINI_API_KEY}
+    - CREDENTIALS_OVERWRITE_DATA={"googleGeminiApi":{"apiKey":"${GEMINI_API_KEY}"}}
+
+  env_file:
+    - path: .env
+      required: true
+
+services:
+
+  # =====================
+  # TRAEFIK
+  # =====================
+  traefik:
+    image: traefik:v2.11
+    container_name: traefik
+    networks:
+      - demo
+    command:
+      - "--api.dashboard=true"
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.httpchallenge.entrypoint=web"
+      - "--certificatesresolvers.letsencrypt.acme.email=${TRAEFIK_ACME_EMAIL}"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - traefik_letsencrypt:/letsencrypt
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    restart: unless-stopped
+
+  # =====================
+  # POSTGRES
+  # =====================
+  postgres:
+    image: postgres:16-alpine
+    hostname: postgres
+    networks:
+      - demo
+    restart: unless-stopped
+    environment:
+      - POSTGRES_USER
+      - POSTGRES_PASSWORD
+      - POSTGRES_DB
+    volumes:
+      - postgres_storage:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -h localhost -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  # =====================
+  # N8N IMPORT
+  # =====================
+  n8n-import:
+    <<: *service-n8n
+    container_name: n8n-import
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        echo "Importing demo data..."
+        n8n import:credentials --separate --input=/demo-data/credentials || true
+        n8n import:workflow --separate --input=/demo-data/workflows || true
+    volumes:
+      - ./n8n/demo-data:/demo-data
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  # =====================
+  # N8N
+  # =====================
+  n8n:
+    <<: *service-n8n
+    container_name: n8n
+    restart: unless-stopped
+    volumes:
+      - n8n_storage:/home/node/.n8n
+      - ./shared:/data/shared
+      - ./documents:/home/node/.n8n-files/documents
+    depends_on:
+      postgres:
+        condition: service_healthy
+      n8n-import:
+        condition: service_completed_successfully
+    labels:
+      - "traefik.enable=true"
+
+      # HTTPS
+      - "traefik.http.routers.n8n.rule=Host(`${N8N_HOST}`)"
+      - "traefik.http.routers.n8n.entrypoints=websecure"
+      - "traefik.http.routers.n8n.tls.certresolver=letsencrypt"
+      - "traefik.http.services.n8n.loadbalancer.server.port=5678"
+
+      # HTTP → HTTPS
+      - "traefik.http.routers.n8n-http.rule=Host(`${N8N_HOST}`)"
+      - "traefik.http.routers.n8n-http.entrypoints=web"
+      - "traefik.http.routers.n8n-http.middlewares=redirect-to-https"
+      - "traefik.http.middlewares.redirect-to-https.redirectscheme.scheme=https"
+
+  # =====================
+  # QDRANT
+  # =====================
+  qdrant:
+    image: qdrant/qdrant:v1.15.5
+    container_name: qdrant
+    networks:
+      - demo
+    restart: unless-stopped
+    volumes:
+      - qdrant_storage:/qdrant/storage
